@@ -45,7 +45,3 @@ CURRENT_STATE.md优先。没有原样导出聊天；从用户最终确认、本�
 ## 最终交付方式
 
 用户确认当前桌面端为另一账号，改为完整ZIP后在另一电脑上传。已同步README、CURRENT_STATE、TODO、DECISIONS和来源清单；本机不再登录或创建GitHub仓库。ZIP保留本地.git以便GitHub Desktop直接发布私有仓库；上传以实际远端结果为准。
-
-## 最终交付方式
-
-用户确认当前桌面端为另一账号，改为完整ZIP后在另一电脑上传。已同步README、CURRENT_STATE、TODO、DECISIONS和来源清单；本机不再登录或创建GitHub仓库。ZIP保留本地.git以便GitHub Desktop直接发布私有仓库；上传以实际远端结果为准。

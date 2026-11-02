@@ -29,6 +29,10 @@ INMP441 → 语音 S3 ↔ Wi-Fi / 小智云（MQTT+UDP 实机路径）
 
 完整ZIP包含`.git`本地提交历史；解压后按[UPLOAD_TO_GITHUB.md](UPLOAD_TO_GITHUB.md)用GitHub Desktop发布为私有仓库，或使用已登录的GitHub CLI。没有远端仓库或上传成功的预设。
 
+## 在另一台电脑上传
+
+完整ZIP包含`.git`本地提交历史；解压后按[UPLOAD_TO_GITHUB.md](UPLOAD_TO_GITHUB.md)用GitHub Desktop发布为私有仓库，或使用已登录的GitHub CLI。没有远端仓库或上传成功的预设。
+
 ## 新对话先读
 
 1. CURRENT_STATE.md：有效状态、DO NOT USE、未确认项。
