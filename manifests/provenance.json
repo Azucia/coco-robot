@@ -16,5 +16,6 @@
   "source_files": 13367,
   "repo_name": "coco-robot",
   "visibility": "private",
-  "remote_upload_status": "not confirmed; inspect actual GitHub result"
+  "remote_upload_status": "not uploaded; user chose complete ZIP transfer to another computer",
+  "delivery": "complete working tree and local .git history in ZIP"
 }

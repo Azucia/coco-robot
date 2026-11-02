@@ -34,3 +34,14 @@ CURRENT_STATE.md优先。没有原样导出聊天；从用户最终确认、本�
 反向对话协议的两份头文件仅空白/clang-format有差异，去除空白后的内容一致；不能把格式差异报成协议不一致。
 
 上游TFT_eSPI自身.gitattributes将少量文本CRLF规范为LF；不改变代码含义。manifests/line-ending-normalization.json列出允许的精确LF版本SHA256；其他源码仍须原始哈希一致。保留厂商属性文件，不擅自改依赖实现。
+
+## 本次执行结果
+
+- 离线审计PASS：源码与固件哈希、允许的3个厂商文本换行规范、协议副本（忽略空白）、有效唤醒配置、MAX_DUTY255、文档链接、禁入文件及单文件<100MiB。
+- 对13367个源码文件核对Git暂存覆盖，无遗漏。19个上游测试夹具逐项以哈希登记；没有用户凭据或个人录音迁入。
+- 从迁移后路径重新编译并运行现有C++协议测试：PASS motion lease, CRC, session, replay, slot bounds, and dialogue isolation。未重新跑全套SDK构建或上游110项。
+- 本地Git提交不等于GitHub上传成功；远端状态只能按实际创建/推送和提交号核对。
+
+## 最终交付方式
+
+用户确认当前桌面端为另一账号，改为完整ZIP后在另一电脑上传。已同步README、CURRENT_STATE、TODO、DECISIONS和来源清单；本机不再登录或创建GitHub仓库。ZIP保留本地.git以便GitHub Desktop直接发布私有仓库；上传以实际远端结果为准。
