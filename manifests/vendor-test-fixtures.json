@@ -1,0 +1,21 @@
+{
+  "source/voice/managed_components/espressif__mqtt/test/apps/publish_connect_test/ca.key": "54157361c60b97ce743fb8f875466311fd0e1f873224f16ef611bb8339cd638d",
+  "source/voice/managed_components/espressif__mqtt/test/apps/publish_connect_test/client_no_pwd.key": "1d1df8ff79d756700952d4c4d16d8b5f9dc2a00069304cdabec79534a8ae09b0",
+  "source/voice/managed_components/espressif__mqtt/test/apps/publish_connect_test/server.key": "e567ff3810f9440dcddb6fc14e2bf93a236f9413d8863f0ae8d3baf6796c7ac8",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/client-revoked.key": "09a838954dc900d513c0545e46f95f4dc0816684cc716993b5ceed5e75baefb4",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/client.key": "5ddc2c7289454e538d6c3966c3329d6e324f7d368dc99cf0164c26834757c0ab",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/client.pem": "db3d4b7a55c250279ab6e623ac88d7bad9dd0991d8ee558d4a86f57cf08b58bc",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/server.key": "9e54a992f64547259a4c411a5fa5eac4dc8271ed20dfb7df06bdcf6caf931974",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/test-alt-ca.key": "63a14b21ad53118167fe8415de807551f6038c3ec34f72c31b57fc33b728a528",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/test-bad-root-ca.key": "8cb0983a0963bae22cb643dca4e51ecb5e13bd5d73f6e761ba81c921a7233a47",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/test-fake-root-ca.key": "4aaa522d5f174bc9169e04eef8505d70aa05474633fa89e28739f1437696dde3",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/test-root-ca.key": "07cec2832375be13f4b7890eb41b3b5fd1a336ed93296debc63b0857bfe41082",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/ssl/test-signing-ca.key": "20abfb4a95d5d0d8d421135a18a125e7fd10b995bcc4300dfbe4090544b74d27",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/keys/server/server-mitm.key": "8ea8dbecb7222dac5d7ce60e6819e76ffd957d37478c15acb62dbc2834c965a7",
+  "source/voice/managed_components/espressif__mqtt/test/tools/paho.mqtt.testing/interoperability/tls_testing/keys/server/server.key": "93e6dcab7873616b573aa7b6906078672b2e84109c29fb658ec495cc1759da1c",
+  "source/voice/managed_components/espressif__esp_audio_effects/example/esp_audio_effects_demo/main/manen_48000_2_24_10.pcm": "bb6ada95810c8d004b837e1ac656e88febc95c8fdfe8c5a827cfe88c546e33dd",
+  "source/voice/managed_components/espressif__esp_audio_effects/example/esp_audio_effects_demo/main/tone.pcm": "5737bd7bd2d1432452f6038625067be9dddf1e659891c321cccb7e2c1c2cfdf4",
+  "source/voice/managed_components/espressif__esp_audio_effects/example/esp_audio_effects_demo/main/voice_flick_up_and_down.pcm": "d4c5b8c790bf0926fac719fc69604036253f78ecbf4a9436073d0221efe9dc0a",
+  "source/voice/managed_components/espressif__esp_audio_effects/example/esp_audio_effects_demo/main/voice_with_hit.pcm": "eb73fc8fc215732023103ac68808a0b6b5d381914b5e47138e586d500b59affa",
+  "source/voice/managed_components/espressif__esp_audio_effects/example/esp_audio_effects_demo/main/voice_with_music.pcm": "70f67e284bbead7f873c79fb989c1a3fb0300598ff0c1b152e93d36a5025094f"
+}

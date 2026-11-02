@@ -1,0 +1,20 @@
+{
+  "migration_date": "2026-11-02",
+  "last_hardware_acceptance": "2026-10-30",
+  "input_release": "Coco-Complete-2026-10-30.zip",
+  "input_release_sha256": "605c011a66fc3905a7816d60c9e01d62983e87e7c5b72df4e676569658a92fd4",
+  "current_truth": "CURRENT_STATE.md",
+  "code_extracted_from_verified_release": true,
+  "excluded": [
+    "all nested build dirs",
+    "git metadata",
+    "caches",
+    "private-backups",
+    "credentials",
+    "raw conversations/recordings"
+  ],
+  "source_files": 13367,
+  "repo_name": "coco-robot",
+  "visibility": "private",
+  "remote_upload_status": "not confirmed; inspect actual GitHub result"
+}

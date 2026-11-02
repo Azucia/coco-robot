@@ -1,0 +1,20 @@
+{
+  "firmware/motor/Coco.ino.bin": "ff476b2458ccd3a9a0d2c46dfe8f55c953e155ed6dd87fa499ea2f4db3af9df3",
+  "firmware/motor/Coco.ino.bootloader.bin": "8f6a4ff7b83a7f073ebe4461a6a94f79fe02528e4e72c5a93bc10a74829ed734",
+  "firmware/motor/Coco.ino.merged.bin": "f0a8399713039cca5af2e87ef7b6b7bdabe5e609110458193d503cd3653177cb",
+  "firmware/motor/Coco.ino.partitions.bin": "ace02503447d0f470692e65fa76002f2d77a92dc81cd3813d8aa66718d716da9",
+  "firmware/remote/WallERemote.ino.bin": "eb0857235a993201f70f96211a7e2663ee84550ce62538689d6191fa68056104",
+  "firmware/remote/WallERemote.ino.bootloader.bin": "8f6a4ff7b83a7f073ebe4461a6a94f79fe02528e4e72c5a93bc10a74829ed734",
+  "firmware/remote/WallERemote.ino.merged.bin": "2ec00a196c518512e5a2ba63a16d18afb20408eb7d907e031a7f75f950d36af7",
+  "firmware/remote/WallERemote.ino.partitions.bin": "ace02503447d0f470692e65fa76002f2d77a92dc81cd3813d8aa66718d716da9",
+  "firmware/voice/bootloader.bin": "76ac05bb24af7ac21b2403059819ebd0164fc3eab815e8a1299cb116f501d5f0",
+  "firmware/voice/flash-layout.json": "e63cd6a7b317da6ee97240563303c60ca6d9619285d91b2d6640b8ade5e80991",
+  "firmware/voice/generated_assets.bin": "cce4b9c6408cb9410bf0328c4091400f79821acad3a982914ac8d02d61c42166",
+  "firmware/voice/ota_data_initial.bin": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f",
+  "firmware/voice/partition-table.bin": "4811619cacae08ef2e0e71b7220c6033a346ca5da7ca179082408c963ef530b5",
+  "firmware/voice/xiaozhi.bin": "be3e3796f7c4e3ec96d296d2cdf310a0c878fd24bb46b2977fae8afcfade60a3",
+  "audio-preview/coco_connecting.wav": "e4686facccf39f9c6a14f09ca50de0e5b682346fdee9ef375328db5369311a9e",
+  "audio-preview/coco_dialogue_01.wav": "e4f88d46f96535122794243cef9113deed05b5c5fcbac1b1314fd8b42f52e1ba",
+  "audio-preview/coco_here.wav": "c9c06db4550fea6d28cdd689c895a21ee1ead6672b5b872f52d578e96252397f",
+  "audio-preview/coco_wake_connecting.wav": "986a92908d6887562996be39306eeae951e0449bec7aca47f741c8e04b53def2"
+}

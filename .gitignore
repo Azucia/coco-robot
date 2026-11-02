@@ -1,0 +1,20 @@
+# Local secrets and outputs (keep tracked release firmware and vendor model bins)
+**/private-backups/
+**/.env
+**/.env.*
+!**/.env.example
+**/*-private.json
+**/*first64k.bin
+**/build/
+**/__pycache__/
+**/.pytest_cache/
+**/node_modules/
+**/.vscode/
+source/voice/sdkconfig
+source/voice/sdkconfig.old
+*.log
+*.pcm
+*.pdb
+*.partial.zip
+protocol-test
+protocol-test.exe

@@ -1,0 +1,5 @@
+{
+  "source/remote/libraries/TFT_eSPI/TFT_Drivers/ILI9341_Init.h": "38972e0d8b403beef5a37722792b642f886ddb848c31113266bc58daff87cd62",
+  "source/remote/libraries/TFT_eSPI/User_Setups/Setup60_RP2040_RPI_MHS.h": "620e837bdcbaf8eb6b8ece5b860a47a77de41e21c0dd274a876297ece39fe51c",
+  "source/remote/libraries/TFT_eSPI/User_Setups/Setup70h_ESP32_S3_GC9A01.h": "1141d713d491917ac2f08823c1b2d9070fbf8f0942957d022ff1129b3ed4f66d"
+}

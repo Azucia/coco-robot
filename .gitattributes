@@ -1,0 +1,14 @@
+* -text
+*.md text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.ps1 text eol=crlf
+*.bin binary
+*.ogg binary
+*.wav binary
+*.a binary
+*.ttf binary
+*.otf binary
+
+# Preserve imported source/dependency bytes for manifest verification.
+source/** -text
