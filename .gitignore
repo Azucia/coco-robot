@@ -18,3 +18,5 @@ source/voice/sdkconfig.old
 *.partial.zip
 protocol-test
 protocol-test.exe
+**/.venv/
+**/settings.json

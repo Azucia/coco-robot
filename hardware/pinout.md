@@ -10,7 +10,7 @@ CURRENT_STATE.md优先；所有引脚分板命名，不能混用。
 | 语音 | BOOT / 板载LED | 0/48 | config.h定义；额外实体接线未确认 |
 | 电机 | 左AIN1/2 | 15/16 | 已存NVS映射和实测；Coco.ino PINS命令 |
 | 电机 | 右BIN1/2 | 4/5 | 同上 |
-| 电机 | 躯干CIN1/2 | 6/7 | 已配置，未验收运动 |
+| 电机 | 摇头CIN1/2 | 6/7 | C路已启用摇头；实物结果见debug/head_wake_validation.md |
 | 电机 | UART1 TX/RX | 13/14 | Coco.ino Serial1.begin(115200,SERIAL_8N1,14,13) |
 
 语音config.h仍带显示SDA41/SCL42及其他通用按钮/灯常量；不等于本机有接线或GUI启用。遥控屏幕/触摸脚保持source/remote中厂家配置，以实际库User_Setup为准，禁止换默认TFT_eSPI配置。
@@ -18,3 +18,7 @@ CURRENT_STATE.md优先；所有引脚分板命名，不能混用。
 ## 源码默认值不等于有效映射
 
 MotorConfig.h的DEFAULT_PINS={4,5,6,7,8,9}仅示例；Coco.ino必须读取已保存PINS才允许驱动。当前实际NVS映射为15,16,4,5,6,7，不能按示例数组重接线。MotorDriver假定外部PWM/STBY已拉高，但实物驱动型号和每根使能线接法未确认。INVERT_A=false、INVERT_B=true；PWM10kHz/8bit，MAX_DUTY=START_DUTY=255，保留RAMP/120ms换向停顿。START_BOOST_MS=100仍在结构中，但起步/上限均255，不代表当前是旧boost临时固件。
+
+## 2026-11-04更新
+
+用户确认原电机板C路G6/G7已接曲轴摇头电机，本次启用该通道；原“躯干固定停止”为旧软件行为。无新增小智GPIO接线。精确实测状态见debug/head_wake_validation.md。

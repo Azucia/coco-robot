@@ -1,17 +1,19 @@
-#include <Arduino.h>
-#include <WiFi.h>
-#include <Preferences.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
+#include <Arduino.h>
+#include <Preferences.h>
+#include <WiFi.h>
 #include <atomic>
 #include "CocoState.h"
+#include "HeadState.h"
 #include "MotorDriver.h"
-#include "coco_uart_protocol.h"
 #include "coco_dialogue_protocol.h"
+#include "coco_uart_protocol.h"
 
 namespace {
 coco::State state;
 coco::DriveState drive;
+coco::HeadState head;
 coco::MotorDriver motors;
 Preferences prefs;
 struct Rx { uint8_t mac[6]; walle::Packet packet; uint32_t at; };
@@ -36,7 +38,9 @@ void dialogue(int slot) {
   if (dialogueSequenceSeen && voiceSequence==dialogueSequence) return;
   coco_uart::Packet p{};
   p.magic=coco_dialogue::MAGIC;p.session=voiceSession;p.sequence=voiceSequence;
-  p.kind=slot>0?coco_dialogue::PLAY:(slot==0?coco_dialogue::NEXT:coco_dialogue::STOP);
+  p.kind = slot > 0 ? coco_dialogue::PLAY
+                    : (slot == 0 ? coco_dialogue::NEXT
+                                 : (slot == -2 ? coco_dialogue::WAKE : coco_dialogue::STOP));
   p.throttle=slot>0?slot:0;
   coco_uart::seal(p);
   if (!coco_dialogue::valid(p,voiceSession)) return;
@@ -47,7 +51,10 @@ void dialogue(int slot) {
 
 void stopAll() {
   uartReceiver.stop();
-  state.stop(); drive.stop(millis()); motors.halt();
+  state.stop();
+  drive.stop(millis());
+  head.stop(millis());
+  motors.halt();
 }
 
 void uartTick() {
@@ -75,7 +82,9 @@ void uartTick() {
       if (p.kind == coco_uart::Drive) {
         if (!wasActive) {
           drive.command(0,0,millis());
-          Serial0.printf("UART_CONTROL active=1 throttle=%d steering=%d\n",p.throttle,p.steering);
+          Serial0.printf("HEAD target=%d output=%d armed=%u active=%u\n", head.target,
+                         head.wheel.output, head.armed, head.active);
+          Serial0.printf("UART_CONTROL active=1 throttle=%d steering=%d\n", p.throttle, p.steering);
         }
         drive.command(p.throttle,p.steering,millis());
       }
@@ -111,14 +120,26 @@ bool send(const uint8_t *mac, const walle::Packet &p) {
   return true;
 }
 void status() {
-  Serial0.printf("COCO MOTOR v0.2 name=Coco radio=%u bound=%u linked=%u channel=6 throttle=%d steering=%d dropped=%lu uptime=%lu\n",
-    ready, state.bound, state.established, state.throttle, state.steering,
-    (unsigned long)dropped.load(), (unsigned long)millis());
-  Serial0.printf("DRIVE neutral_armed=%u left_pwm=%d right_pwm=%d max_pwm=%d\n",drive.neutralSeen,drive.left.output,drive.right.output,coco::MAX_DUTY);
-  Serial0.printf("PINMAP configured=%u pending_reboot=%u active=%u,%u,%u,%u,%u,%u order=AIN1,AIN2,BIN1,BIN2,CIN1,CIN2\n",
-    mappingConfigured,configPending,activePins[0],activePins[1],activePins[2],activePins[3],activePins[4],activePins[5]);
-  Serial0.printf("UART_CONTROL active=%u throttle=%d steering=%d tx=13 rx=14 baud=115200\n",
-    uartReceiver.active,uartReceiver.throttle,uartReceiver.steering);
+    uint8_t actualChannel = 0;
+    wifi_second_chan_t secondary = WIFI_SECOND_CHAN_NONE;
+    esp_wifi_get_channel(&actualChannel, &secondary);
+    Serial0.printf("WIFI_CHANNEL actual=%u configured=%u\n", actualChannel, coco::CHANNEL);
+    Serial0.printf(
+        "COCO MOTOR v0.2 name=Coco radio=%u bound=%u linked=%u channel=6 throttle=%d steering=%d "
+        "dropped=%lu uptime=%lu\n",
+        ready, state.bound, state.established, state.throttle, state.steering,
+        (unsigned long)dropped.load(), (unsigned long)millis());
+    Serial0.printf("DRIVE neutral_armed=%u left_pwm=%d right_pwm=%d max_pwm=%d\n",
+                   drive.neutralSeen, drive.left.output, drive.right.output, coco::MAX_DUTY);
+    Serial0.printf(
+        "PINMAP configured=%u pending_reboot=%u active=%u,%u,%u,%u,%u,%u "
+        "order=AIN1,AIN2,BIN1,BIN2,CIN1,CIN2\n",
+        mappingConfigured, configPending, activePins[0], activePins[1], activePins[2],
+        activePins[3], activePins[4], activePins[5]);
+    Serial0.printf("HEAD target=%d output=%d armed=%u active=%u\n", head.target, head.wheel.output,
+                   head.armed, head.active);
+    Serial0.printf("UART_CONTROL active=%u throttle=%d steering=%d tx=13 rx=14 baud=115200\n",
+                   uartReceiver.active, uartReceiver.throttle, uartReceiver.steering);
 }
 void configurePins(const char *line) {
   unsigned values[6]{}; char extra;
@@ -148,6 +169,8 @@ void serialTick() {
       else if (!strncmp(command,"PINS ",5)) configurePins(command);
       else if (!strcmp(command,"REBOOT")) {stopAll();Serial0.flush();ESP.restart();}
       else if (!strcmp(command,"STOP")) stopAll();
+      else if (!strcmp(command, "WAKE"))
+          dialogue(-2);
       else if (!strcmp(command,"DIALOG NEXT")) dialogue(0);
       else if (!strcmp(command,"DIALOG STOP")) dialogue(-1);
       else if (!strncmp(command,"DIALOG ",7)) {
@@ -172,7 +195,10 @@ void process(const Rx &event) {
   if (!walle::decode(&event.packet, sizeof(event.packet), p) ||
       uint32_t(millis()-event.at) >= walle::CONTROL_LEASE_MS || (event.mac[0] & 1)) return;
   if (p.kind == walle::Kind::Discover && p.nonce && state.allowed(event.mac)) {
-    send(event.mac, state.reply(walle::Kind::Offer, 0, p.nonce));
+      auto offer = state.reply(walle::Kind::Offer, 0, p.nonce);
+      offer.steering = coco::CHANNEL;  // Advertise sender channel, not receiver RX metadata.
+      walle::seal(offer);
+      send(event.mac, offer);
   } else if (p.kind == walle::Kind::PairRequest && state.allowed(event.mac) && p.session && p.nonce) {
     // Persist first, then acknowledge. Never claim a binding that failed to save.
     if (!state.bound && (!storageOK || prefs.putBytes("remote", event.mac, 6) != 6)) {
@@ -186,31 +212,38 @@ void process(const Rx &event) {
         event.mac[0],event.mac[1],event.mac[2],event.mac[3],event.mac[4],event.mac[5],(unsigned long)p.session);
     }
   } else if (p.kind == walle::Kind::Dialogue) {
-    if (state.established && state.same(event.mac) &&
-        p.session==state.session && p.nonce==state.nonce &&
-        p.leaseMs && p.leaseMs<=walle::CONTROL_LEASE_MS &&
-        uint32_t(millis()-event.at)<p.leaseMs &&
-        walle::newerSequence(p.sequence,state.sequence) &&
-        ((p.steering==0 && p.throttle>=1 && p.throttle<=16) ||
-         ((p.steering==1 || p.steering==2) && p.throttle==0))) {
-      state.sequence=p.sequence;
-      dialogue(p.steering==0?p.throttle:(p.steering==1?0:-1));
-    }
-  } else if (p.kind == walle::Kind::Control) {
-    int16_t oldT = state.throttle, oldS = state.steering;
-    if (state.control(event.mac, p, event.at, millis())) {
-      if(mappingConfigured && !configPending) {
-        if (state.throttle || state.steering) {
-          if (uartReceiver.active) { uartReceiver.stop(); uartSuppressed=true; }
-          drive.command(state.throttle,state.steering,millis());
-        } else if (!uartReceiver.active) {
-          drive.command(0,0,millis());
-        }
-        drive.tick(millis(),true); motors.apply(drive);
+      if (state.auxiliary(event.mac, p, event.at, millis())) {
+          dialogue(p.steering == 0 ? p.throttle
+                                   : (p.steering == 1 ? 0 : (p.steering == 3 ? -2 : -1)));
       }
-      if (oldT != state.throttle || oldS != state.steering)
-        Serial0.printf("CONTROL throttle=%d steering=%d neutral_armed=%u\n",state.throttle,state.steering,drive.neutralSeen);
-    }
+  } else if (p.kind == walle::Kind::Head) {
+      if (state.auxiliary(event.mac, p, event.at, millis()) && mappingConfigured &&
+          !configPending) {
+          int16_t oldTarget = head.target;
+          if (head.command(p.throttle, event.at, p.leaseMs, millis()) && oldTarget != head.target)
+              Serial0.printf("HEAD_CONTROL target=%d pins=%u,%u\n", head.target, activePins[4],
+                             activePins[5]);
+      }
+  } else if (p.kind == walle::Kind::Control) {
+      int16_t oldT = state.throttle, oldS = state.steering;
+      if (state.control(event.mac, p, event.at, millis())) {
+          if (mappingConfigured && !configPending) {
+              if (state.throttle || state.steering) {
+                  if (uartReceiver.active) {
+                      uartReceiver.stop();
+                      uartSuppressed = true;
+                  }
+                  drive.command(state.throttle, state.steering, millis());
+              } else if (!uartReceiver.active) {
+                  drive.command(0, 0, millis());
+              }
+              drive.tick(millis(), true);
+              motors.apply(drive, head.wheel.output);
+          }
+          if (oldT != state.throttle || oldS != state.steering)
+              Serial0.printf("CONTROL throttle=%d steering=%d neutral_armed=%u\n", state.throttle,
+                             state.steering, drive.neutralSeen);
+      }
   }
 }
 }
@@ -239,8 +272,10 @@ void setup() {
     Serial0.println("FATAL espnow_init"); return;
   }
   ready = true;
-  Serial0.printf("COCO_READY name=Coco mac=%s channel=6 protocol=1 bytes=48 pairing=%s motor_output=TB6612_SIX_IN max_pwm=%d torso=stopped\n",
-    WiFi.macAddress().c_str(), state.bound ? "bound-remote-only" : "open", coco::MAX_DUTY);
+  Serial0.printf(
+      "COCO_READY name=Coco mac=%s channel=6 protocol=1 bytes=48 pairing=%s "
+      "motor_output=TB6612_SIX_IN max_pwm=%d head=lease_controlled\n",
+      WiFi.macAddress().c_str(), state.bound ? "bound-remote-only" : "open", coco::MAX_DUTY);
 }
 void loop() {
   serialTick();
@@ -251,8 +286,10 @@ void loop() {
   // Enforce the lease before processing queued work, using each packet's receive timestamp.
   bool moving = state.throttle || state.steering, linked = state.established;
   state.tick(now);
+  head.tick(now, state.established && mappingConfigured && !configPending);
   if(mappingConfigured && !configPending) {
-    drive.tick(now,uartReceiver.active || (state.established && state.hasControl)); motors.apply(drive);
+      drive.tick(now, uartReceiver.active || (state.established && state.hasControl));
+      motors.apply(drive, head.wheel.output);
   }
   if (moving && !state.hasControl) Serial0.println("CONTROL_TIMEOUT stop=1 all_IN=0");
   if (linked && !state.established) Serial0.println("LINK_TIMEOUT waiting_for_reconnect=1");

@@ -15,7 +15,7 @@ Independent ESP32-S3 board variant based on bread-compact-wifi, without an OLED.
 - Single INMP441: WS GPIO4, SCK GPIO5, SD GPIO6, L/R to GND, 3.3V supply. Keep the verified 5cm leads.
 - Local current-voice prompts and presentation replies are in `sounds/`; `coco_presets.h` maps slots to exact recorded text.
 - USB commands: `COCO DIALOG 1`, `COCO DIALOG NEXT`, `COCO DIALOG STOP`. Repeated requests restart playback; the latest pending request wins.
-- Wake and microphone upload are disabled during preset playback and restored on completion. No new remote UI buttons are assigned yet.
+- Wake and microphone upload are disabled during preset playback and restored on completion. Preset dialogue buttons remain unassigned; head/wake buttons were added to the remote on 2026-11-04.
 - `COCO STATUS` exposes input peak/clipping counters. `COCO WAKE` tests the software path only, not microphone recognition.
 - Keep Wi-Fi in performance mode and omit wake-audio upload to reduce response overhead. TLS validation remains enabled; cloud delays remain variable.
 - NoDisplay must skip visual resource creation in Assets::Apply, while keeping model and speech asset loading enabled.

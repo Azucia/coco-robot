@@ -1,21 +1,22 @@
-#include <Arduino.h>
-#include <TFT_eSPI.h>
-#include <Wire.h>
-#include <FT6336.h>
-#include <WiFi.h>
-#include <Preferences.h>
-#include <esp_now.h>
-#include <esp_wifi.h>
-#include <esp_sleep.h>
-#include <driver/usb_serial_jtag.h>
+#include "remote_app.h"
 #include <driver/gpio.h>
 #include <driver/rtc_io.h>
+#include <driver/usb_serial_jtag.h>
+#include <esp_now.h>
+#include <esp_sleep.h>
+#include <esp_wifi.h>
+#include <Arduino.h>
+#include <FT6336.h>
+#include <Preferences.h>
+#include <TFT_eSPI.h>
+#include <WiFi.h>
+#include <Wire.h>
 #include <esp32-hal-rgb-led.h>
 #include <atomic>
-#include "remote_app.h"
 #include "WallEProtocol.h"
-#include "ui_assets.h"
 #include "build_info.h"
+#include "coco_button_labels.h"
+#include "ui_assets.h"
 #include "ui_theme.h"
 
 namespace {
@@ -23,6 +24,8 @@ using walle::Packet;using walle::Kind;using walle::Direction;
 struct Rect{int16_t x,y,w,h;bool contains(int px,int py)const{return px>=x&&py>=y&&px<x+w&&py<y+h;}};
 constexpr Rect BUTTONS_SINGLE[]={{108,76,100,80},{108,232,100,80},{8,154,100,80},{208,154,100,80}};
 constexpr Rect BUTTONS_DUAL[]={{16,88,112,96},{16,208,112,96},{232,208,112,96},{352,208,112,96}};
+constexpr Rect HEAD_DUAL = {232, 88, 112, 96}, WAKE_DUAL = {352, 88, 112, 96};
+constexpr Rect HEAD_SINGLE = {324, 88, 140, 72}, WAKE_SINGLE = {324, 192, 140, 72};
 constexpr Rect LINK={14,14,190,36},CLOSE={380,50,40,40};
 constexpr Rect BATTERY={372,14,94,36},FLIP={74,100,332,48},MODE={74,164,332,48};
 constexpr Rect PANEL={54,42,372,244},VERSION={84,220,312,62};
@@ -48,6 +51,44 @@ class RemoteApp {
  Candidate candidates[3];
  uint32_t nonce=0,session=0,sequence=0;
  int pendingDialogue=-2;
+ bool headHeld = false, forceHead = true;
+ bool paintedHead = false, paintedWake = false;
+ uint32_t lastHead = 0, wakeFlashUntil = 0, lastWakeTap = 0;
+ char usbCommand[40]{};
+ size_t usbCommandLength = 0;
+ const Rect& headButton() const { return twoHand ? HEAD_DUAL : HEAD_SINGLE; }
+ const Rect& wakeButton() const { return twoHand ? WAKE_DUAL : WAKE_SINGLE; }
+ void setHead(bool held) {
+     if (headHeld != held) {
+         headHeld = held;
+         forceHead = true;
+     }
+ }
+ bool queueWake() {
+     uint32_t now = millis();
+     if (!radioReady || !linked || (lastWakeTap && uint32_t(now - lastWakeTap) < 600))
+         return false;
+     pendingDialogue = -3;
+     lastWakeTap = now;
+     wakeFlashUntil = now + 250;
+     return true;
+ }
+ void usbCommands() {
+     for (unsigned i = 0; i < 32 && Serial.available(); ++i) {
+         char c = Serial.read();
+         if (c == '\r')
+             continue;
+         if (c == '\n') {
+             usbCommand[usbCommandLength] = 0;
+             if (!strcmp(usbCommand, "REMOTE WAKE"))
+                 Serial.printf("REMOTE_WAKE_QUEUED ok=%u\n", queueWake());
+             usbCommandLength = 0;
+         } else if (usbCommandLength < sizeof(usbCommand) - 1)
+             usbCommand[usbCommandLength++] = c;
+         else
+             usbCommandLength = 0;
+     }
+ }
  uint32_t scanStarted=0,lastDiscover=0,lastPairSend=0,pairStarted=0,lastAlive=0,lastControl=0,txStarted=0;
  uint32_t introEnd=0,lastTouchPoll=0,lastTouchGood=0,lastBattery=0,lastLog=0,bootPressedAt=0;
  bool intro=true,modal=false,uiDirty=false,touchWasDown=false,inputArmed=false,forceControl=false;
@@ -95,7 +136,14 @@ class RemoteApp {
   esp_err_t result=esp_now_send(mac,(const uint8_t*)&p,sizeof(p));
   if(result!=ESP_OK){txBusy.store(false);return false;}return true;
  }
- void requestStop(){desired=Direction::Stop;visualButton=-1;forceControl=true;inputArmed=false;}
+ void requestStop() {
+     setHead(false);
+     forceHead = true;
+     desired = Direction::Stop;
+     visualButton = -1;
+     forceControl = true;
+     inputArmed = false;
+ }
  void beginScan(bool manual){pendingDialogue=-2;
   requestStop();linked=false;pairPending=false;manualPairing=manual;
   for(auto &c:candidates)c.used=false;
@@ -110,17 +158,29 @@ class RemoteApp {
   Serial.printf("PAIR_REQUEST peer=%02X:%02X:%02X:%02X:%02X:%02X channel=%u\r\n",mac[0],mac[1],mac[2],mac[3],mac[4],mac[5],channel);
  }
  void onOffer(const RxEvent &e,const Packet &p){
-  if(p.nonce!=nonce||e.channel<1||e.channel>LAST_SCAN_CHANNEL||pairPending||linked)return;
-  int slot=-1;for(int i=0;i<3;i++)if(candidates[i].used&&sameMac(candidates[i].mac,e.mac)){slot=i;break;}
+     uint8_t offeredChannel = walle::offerChannel(p, e.channel);
+     if (p.nonce != nonce || !offeredChannel || pairPending || linked)
+         return;
+     int slot = -1;
+     for (int i = 0; i < 3; i++)
+         if (candidates[i].used && sameMac(candidates[i].mac, e.mac)) {
+             slot = i;
+             break;
+         }
   if(slot<0)for(int i=0;i<3;i++)if(!candidates[i].used){slot=i;break;}
   if(slot>=0){
    Candidate &c=candidates[slot];bool changed=!c.used||!sameMac(c.mac,e.mac);
    c.used=true;memcpy(c.mac,e.mac,6);memcpy(c.name,p.name,16);c.name[16]=0;
    for(char &ch:c.name)if(ch&&(ch<32||ch>126))ch='?';
-   if(!c.name[0])strcpy(c.name,"WALL-E");c.channel=e.channel;c.rssi=e.rssi;c.seen=millis();
+   if (!c.name[0])
+       strcpy(c.name, "WALL-E");
+   c.channel = offeredChannel;
+   c.rssi = e.rssi;
+   c.seen = millis();
    if(changed){uiDirty=true;Serial.printf("ROBOT_FOUND name=%s channel=%u rssi=%d\r\n",c.name,c.channel,c.rssi);}
   }
-  if(haveStored&&!manualPairing&&sameMac(storedMac,e.mac))beginPair(e.mac,e.channel);
+  if (haveStored && !manualPairing && sameMac(storedMac, e.mac))
+      beginPair(e.mac, offeredChannel);
  }
  void radioTick(){
   if(!radioReady)return;uint32_t now=millis();
@@ -139,6 +199,10 @@ class RemoteApp {
     }else if(p.kind==Kind::Heartbeat&&linked){lastAlive=now;}
    }
   }
+  // Offer processing can start pairing after the tick's original timestamp.
+  // Refresh it before unsigned age tests, otherwise a new session underflows
+  // and is immediately treated as timed out before its first packet is sent.
+  now=millis();
   for(auto &c:candidates)if(c.used&&now-c.seen>5500){c.used=false;if(modal)uiDirty=true;}
   if(linked){
    if(now-lastAlive>walle::REMOTE_LINK_TIMEOUT_MS){Serial.println("LINK_TIMEOUT stop=1");beginScan(false);return;}
@@ -146,10 +210,16 @@ class RemoteApp {
     int16_t throttle=0,steering=0;walle::axes(desired,throttle,steering);
     if(sendPacket(Kind::Control,peerMac,throttle,steering)){lastControl=now;forceControl=false;}
    }
+   if ((forceHead || now - lastHead >= walle::CONTROL_PERIOD_MS) && !txBusy.load()) {
+       if (sendPacket(Kind::Head, peerMac, headHeld ? 1000 : 0, 0)) {
+           lastHead = now;
+           forceHead = false;
+       }
+   }
    if(pendingDialogue!=-2 && !txBusy.load()){
     int value=pendingDialogue;
     int16_t slot=value>0?value:0;
-    int16_t action=value>0?0:(value==0?1:2);
+    int16_t action = value > 0 ? 0 : (value == 0 ? 1 : (value == -3 ? 3 : 2));
     if(sendPacket(Kind::Dialogue,peerMac,slot,action)) pendingDialogue=-2;
    }
    return;
@@ -207,6 +277,23 @@ class RemoteApp {
    }
    push(r.x,r.y+row,r.w,1,introStrip);
   }
+ }
+ void paintAuxButton(const Rect& r, const uint8_t* label, bool pressed, const char* hint) {
+     uint16_t fill = pressed ? 0x0679 : 0x1948;
+     lcd.fillRoundRect(r.x, r.y, r.w, r.h, 14, fill);
+     lcd.drawRoundRect(r.x, r.y, r.w, r.h, 14, pressed ? 0xFFFF : 0x6C16);
+     lcd.drawBitmap(r.x + (r.w - 80) / 2, r.y + 10, label, 80, 32, 0xFFFF);
+     lcd.setTextFont(2);
+     lcd.setTextSize(1);
+     lcd.setTextColor(0xFFFF, fill);
+     lcd.setTextDatum(MC_DATUM);
+     lcd.drawString(hint, r.x + r.w / 2, r.y + r.h - 16);
+ }
+ void paintAux() {
+     paintedHead = headHeld;
+     paintedWake = int32_t(wakeFlashUntil - millis()) > 0;
+     paintAuxButton(headButton(), coco_head_label, paintedHead, "HOLD");
+     paintAuxButton(wakeButton(), coco_wake_label, paintedWake, "XIAOZHI");
  }
  void paintStatus(){
   const uint16_t *images[]={link_state_0,link_state_1,link_state_2,link_state_3,link_state_4};
@@ -276,8 +363,11 @@ class RemoteApp {
    if(modal){paintModal();return;}
    paintHome();paintStatus();paintBattery();
    for(int i=0;i<4;i++)paintButton(i,false);
+   paintAux();
   }
   if(modal||settings)return;
+  if (headHeld != paintedHead || (int32_t(wakeFlashUntil - millis()) > 0) != paintedWake)
+      paintAux();
   if(statusIndex()!=paintedStatus)paintStatus();
   if(batteryPercent!=paintedBattery||paintedUsb!=int(usbHost))paintBattery();
   if(visualButton!=paintedButton){
@@ -303,7 +393,17 @@ class RemoteApp {
   if(intro||millis()-lastTouchPoll<20)return;lastTouchPoll=millis();int x=0,y=0;int result=readTouch(x,y);
   if(result<0){if(millis()-lastTouchGood>120){requestStop();touchWasDown=false;}return;}
   lastTouchGood=millis();
-  if(result==0){touchWasDown=false;inputArmed=true;if(desired!=Direction::Stop){desired=Direction::Stop;forceControl=true;}visualButton=-1;return;}
+  if (result == 0) {
+      setHead(false);
+      touchWasDown = false;
+      inputArmed = true;
+      if (desired != Direction::Stop) {
+          desired = Direction::Stop;
+          forceControl = true;
+      }
+      visualButton = -1;
+      return;
+  }
   if(result!=1){requestStop();touchWasDown=true;return;}
   bool tap=!touchWasDown;touchWasDown=true;
   if(bootDown){requestStop();return;}
@@ -342,6 +442,26 @@ class RemoteApp {
   }
   if(tap&&LINK.contains(x,y)){
    if(linked)sendPacket(Kind::Control,peerMac,0,0);modal=true;beginScan(true);uiDirty=true;return;
+  }
+  if (headButton().contains(x, y)) {
+      if (desired != Direction::Stop) {
+          desired = Direction::Stop;
+          forceControl = true;
+      }
+      visualButton = -1;
+      setHead(linked && inputArmed);
+      return;
+  }
+  setHead(false);
+  if (wakeButton().contains(x, y)) {
+      if (desired != Direction::Stop) {
+          desired = Direction::Stop;
+          forceControl = true;
+      }
+      visualButton = -1;
+      if (tap && inputArmed)
+          queueWake();
+      return;
   }
   int next=-1;for(int i=0;i<4;i++)if(buttons()[i].contains(x,y)){next=i;break;}
   if(next!=visualButton){visualButton=next;Serial.printf("BUTTON index=%d x=%d y=%d linked=%u\r\n",next,x,y,linked);}
@@ -417,8 +537,25 @@ class RemoteApp {
   introStarted=millis();lastIntroFrame=introStarted;introEnd=introStarted+1750;
  }
  void loop(){
-  powerTick();touchTick();radioTick();batteryTick();usbTick();uiTick();
-  if(millis()-lastLog>=3000){lastLog=millis();Serial.printf("WALLE_REMOTE v1.5 ui=%s radio=%u linked=%u pairing=%u channel=%u found=%d battery_mv=%u battery_pct=%d command=%d theme_trans=%u usb_host=%u uptime=%lu\r\n",intro?"intro":settings?"settings":modal?"pairing":"remote",radioReady,linked,pairPending,currentChannel,candidateCount(),batteryMv,batteryPercent,(int)desired,transTheme,usbHost,(unsigned long)millis());}
+     powerTick();
+     touchTick();
+     usbCommands();
+     radioTick();
+     batteryTick();
+     usbTick();
+     uiTick();
+     if (millis() - lastLog >= 3000) {
+         lastLog = millis();
+         Serial.printf(
+             "WALLE_REMOTE v1.5 ui=%s radio=%u linked=%u pairing=%u channel=%u found=%d "
+             "battery_mv=%u battery_pct=%d command=%d theme_trans=%u usb_host=%u uptime=%lu\r\n",
+             intro      ? "intro"
+             : settings ? "settings"
+             : modal    ? "pairing"
+                        : "remote",
+             radioReady, linked, pairPending, currentChannel, candidateCount(), batteryMv,
+             batteryPercent, (int)desired, transTheme, usbHost, (unsigned long)millis());
+     }
   delay(2);
  }
 };

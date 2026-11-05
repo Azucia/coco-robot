@@ -3,7 +3,7 @@
 
 namespace coco_dialogue {
 constexpr uint32_t MAGIC = 0x444f4343;
-constexpr uint8_t PLAY = 1, NEXT = 2, STOP = 3;
+constexpr uint8_t WAKE = 0, PLAY = 1, NEXT = 2, STOP = 3;
 constexpr int MAX_SLOT = 16;
 
 // Reverse UART messages never enter the motor's Drive receiver. They reuse its
@@ -11,7 +11,7 @@ constexpr int MAX_SLOT = 16;
 inline bool valid(const coco_uart::Packet& p, uint32_t session) {
     return coco_uart::valid(p, MAGIC) && p.session == session && p.steering == 0 &&
            ((p.kind == PLAY && p.throttle >= 1 && p.throttle <= MAX_SLOT) ||
-            ((p.kind == NEXT || p.kind == STOP) && p.throttle == 0));
+            ((p.kind == WAKE || p.kind == NEXT || p.kind == STOP) && p.throttle == 0));
 }
 class Receiver {
     uint32_t sequence_ = 0;

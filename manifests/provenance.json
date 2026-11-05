@@ -13,9 +13,23 @@
     "credentials",
     "raw conversations/recordings"
   ],
-  "source_files": 13367,
+  "source_files": 13370,
   "repo_name": "coco-robot",
-  "visibility": "private",
-  "remote_upload_status": "not uploaded; user chose complete ZIP transfer to another computer",
-  "delivery": "complete working tree and local .git history in ZIP"
+  "visibility": "public (existing repository; unchanged)",
+  "remote_upload_status": "main is the complete project state; verify live branch commit for exact revision",
+  "delivery": "full source/dependencies/firmware/docs plus all 2026-11-04 updates synchronized to existing repository",
+  "updates": [
+    {
+      "date": "2026-11-04",
+      "feature": "motor C-channel crank head; remote head/wake buttons; pairing channel and timer fixes",
+      "hardware_flashed": [
+        "84:c7:bb:5a:ae:dc",
+        "84:c7:bb:58:e7:88",
+        "b8:1f:3f:c5:0a:84"
+      ],
+      "physical_head_test": "awaiting user confirmation",
+      "cloud_wake_test": "deferred by user until Wi-Fi setup"
+    }
+  ],
+  "repo_url": "https://github.com/Azucia/coco-robot"
 }

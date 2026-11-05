@@ -28,4 +28,8 @@ Coco.ino拥有UART/ESP-NOW、NVS映射与配对；CocoState.h/DriveState等保�
 
 ## 遥控端（Arduino）
 
-source/remote/WallERemote，现有UI保留。remote_app.h预留remotePlayDialogue(1..16)、remotePlayNextDialogue()、remoteStopDialogue()。返回true仅表示排入本地单槽，非机器人播放ACK。断线/重连清空待发对话；方向心跳优先于对话包。新固件已编译未刷入。
+source/remote/WallERemote，现有UI保留。remote_app.h预留remotePlayDialogue(1..16)、remotePlayNextDialogue()、remoteStopDialogue()。返回true仅表示排入本地单槽，非机器人播放ACK。断线/重连清空待发对话；方向心跳优先于对话包。带摇头/唤醒键的新固件已于11/4刷入；预置对话按钮仍未安排。
+
+## 2026-11-04控制扩展
+
+MotorDriver C路改为HeadState独立租期输出，不再固定停止。遥控单触摸驱动头部保持帧，唤醒单次事件沿用电机板中转UART到板型CocoLink，调用已有WakeWordInvoke主循环调度。没有核心音频/网络协议改动；自定义词和GPIO保留。具体接口和未验收部分见head-and-wake.md。

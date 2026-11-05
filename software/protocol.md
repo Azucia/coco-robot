@@ -33,3 +33,9 @@ Dialogue7：steering 0=指定槽（throttle1～16），1=下一段（throttle0�
 语音115200：COCO STATUS；COCO MIC GAIN 1..16；COCO WAKE（软件诊断）；COCO DIALOG 1..16 / NEXT / STOP；COCO TEST FORWARD|BACKWARD|LEFT|RIGHT 100..2000；COCO STOP。
 
 电机115200：DIALOG 1..16 / NEXT / STOP；新空板映射PINS 15 16 4 5 6 7后REBOOT。完整电机控制台命令见Coco.ino；不要对已有板随意重置NVS/配对。
+
+## 2026-11-04扩展（高于上文旧范围）
+
+ESP-NOW可解码kind范围更新为1～8，新增Head8：steering0、throttle0/±1000、lease≤250ms、50ms发送，独立C路租期。Dialogue7增加steering3/throttle0表示唤醒。已配对MAC/session/nonce/新序号检查保留，新辅助包仅更新sequence，不延长履带租期或连接心跳。
+
+反向UART增加WAKE0，throttle=steering=0，其他PLAY1/NEXT2/STOP3不变；coco_dialogue魔数与运动魔数分开。底层运动种类没有扩展。细节见head-and-wake.md；三端配套更新。

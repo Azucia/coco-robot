@@ -28,7 +28,7 @@ for option in ('CONFIG_CUSTOM_WAKE_WORD="hei kou kou"','CONFIG_CUSTOM_WAKE_WORD_
 truth=(root/'CURRENT_STATE.md').read_text(encoding='utf8')
 check(truth.startswith('THIS FILE IS THE CURRENT SOURCE OF TRUTH.'),'truth header absent')
 check('## DO NOT USE' in truth,'DO NOT USE absent')
-check('未刷入遥控器' in truth and '2～16为空' in truth,'deployment boundaries missing')
+check('已刷入Coco-HeadWake-20261104版' in truth and '2～16为空' in truth,'deployment boundaries missing')
 check('MAX_DUTY = 255' in (motor/'MotorConfig.h').read_text(encoding='utf8'),'duty changed')
 own_docs=[root/x for x in ('README.md','CURRENT_STATE.md','TODO.md','DECISIONS.md','DEPRECATED.md','AGENTS.md')]
 for folder in ('hardware','software','debug'):

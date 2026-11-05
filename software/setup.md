@@ -36,7 +36,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ./Flash-Device.ps1 -Target m
 
 COM13只是历史示例。脚本校验SHA256.json、MAC，读前64KB到忽略的private-backups，再分段写入；不发运动命令。默认查本机Arduino esptool，可用-EsptoolPath指定。不能提交备份，不能擅自全片擦除。
 
-语音DIO/80MHz/16MB：0x0 bootloader，0x8000 partition-table，0xd000 ota_data_initial，0x20000 xiaozhi，0x800000 generated_assets；资源约2.99MB/8MB分区。电机原板仅应用0x10000，保留映射和配对；空板首次配置完整布局须另核实。不要把旧091V3的0x100000用到这里。遥控版当前不提供自动刷写默认流程，等按钮确定并核对身份。
+语音DIO/80MHz/16MB：0x0 bootloader，0x8000 partition-table，0xd000 ota_data_initial，0x20000 xiaozhi，0x800000 generated_assets；资源约2.99MB/8MB分区。电机原板仅应用0x10000，保留映射和配对；空板首次配置完整布局须另核实。不要把旧091V3的0x100000用到这里。现有Flash-Device.ps1不包含遥控自动刷写；11/4已核对身份并刷入摇头/唤醒版，应用地址0x10000，详见head-and-wake.md。
 
 ## 台词与唤醒
 

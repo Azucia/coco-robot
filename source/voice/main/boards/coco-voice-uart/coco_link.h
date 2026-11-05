@@ -131,10 +131,14 @@ class CocoLink {
             for (int i = 0; i < count; ++i) {
                 coco_uart::Packet event{};
                 if (event_parser_.feed(input[i], event, coco_dialogue::MAGIC) &&
-                    event_receiver_.accept(event, session_) && on_dialogue_) {
-                    on_dialogue_(event.kind == coco_dialogue::PLAY   ? event.throttle
-                                 : event.kind == coco_dialogue::NEXT ? 0
-                                                                     : -1);
+                    event_receiver_.accept(event, session_)) {
+                    if (event.kind == coco_dialogue::WAKE) {
+                        ESP_LOGI("CocoLink", "REMOTE_WAKE received");
+                        Application::GetInstance().WakeWordInvoke("嘿Coco");
+                    } else if (on_dialogue_)
+                        on_dialogue_(event.kind == coco_dialogue::PLAY   ? event.throttle
+                                     : event.kind == coco_dialogue::NEXT ? 0
+                                                                         : -1);
                 }
                 coco_uart::Packet ack{};
                 if (parser_.feed(input[i], ack, coco_uart::ACK_MAGIC) && ack.session == session_) {

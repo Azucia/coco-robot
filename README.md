@@ -23,15 +23,15 @@ INMP441 → 语音 S3 ↔ Wi-Fi / 小智云（MQTT+UDP 实机路径）
 
 ## 在另一台电脑上传
 
-完整ZIP包含`.git`本地提交历史；解压后按[UPLOAD_TO_GITHUB.md](UPLOAD_TO_GITHUB.md)用GitHub Desktop发布为私有仓库，或使用已登录的GitHub CLI。没有远端仓库或上传成功的预设。
+当前仓库为 [Azucia/coco-robot](https://github.com/Azucia/coco-robot)，main是后续工作使用的完整状态。本次同步包含11/4电脑台词生成器及摇头/唤醒更新。旧ZIP可作离线快照，早期首次上传步骤见[上传说明](UPLOAD_TO_GITHUB.md)，不要用旧ZIP覆盖main的新内容。
 
 ## 在另一台电脑上传
 
-完整ZIP包含`.git`本地提交历史；解压后按[UPLOAD_TO_GITHUB.md](UPLOAD_TO_GITHUB.md)用GitHub Desktop发布为私有仓库，或使用已登录的GitHub CLI。没有远端仓库或上传成功的预设。
+当前仓库为 [Azucia/coco-robot](https://github.com/Azucia/coco-robot)，main是后续工作使用的完整状态。本次同步包含11/4电脑台词生成器及摇头/唤醒更新。旧ZIP可作离线快照，早期首次上传步骤见[上传说明](UPLOAD_TO_GITHUB.md)，不要用旧ZIP覆盖main的新内容。
 
 ## 在另一台电脑上传
 
-完整ZIP包含`.git`本地提交历史；解压后按[UPLOAD_TO_GITHUB.md](UPLOAD_TO_GITHUB.md)用GitHub Desktop发布为私有仓库，或使用已登录的GitHub CLI。没有远端仓库或上传成功的预设。
+当前仓库为 [Azucia/coco-robot](https://github.com/Azucia/coco-robot)，main是后续工作使用的完整状态。本次同步包含11/4电脑台词生成器及摇头/唤醒更新。旧ZIP可作离线快照，早期首次上传步骤见[上传说明](UPLOAD_TO_GITHUB.md)，不要用旧ZIP覆盖main的新内容。
 
 ## 新对话先读
 
@@ -52,7 +52,7 @@ INMP441 → 语音 S3 ↔ Wi-Fi / 小智云（MQTT+UDP 实机路径）
 | source/voice/ | 小智 2.5.2 定制 coco-voice-uart 工程，含锁定依赖 |
 | source/motor/Coco/ | 电机 Arduino 工程及宿主协议测试 |
 | source/remote/ | 遥控工程和厂家配置库；对话接口预留版 |
-| firmware/ | 2026-10-30 构建产物；遥控产物尚未刷入 |
+| firmware/ | 当前固件：10/30基线及11/4摇头/唤醒更新，三端均已刷入；实测边界见debug/ |
 | tools/ | 当前音色生成、校验工具 |
 | Flash-Device.ps1 / SHA256.json | 按 MAC 核对、备份、校验后烧录；交付文件哈希 |
 | manifests/ | 本次迁移的文件哈希与来源记录 |
@@ -61,3 +61,11 @@ INMP441 → 语音 S3 ↔ Wi-Fi / 小智云（MQTT+UDP 实机路径）
 没有 Wi-Fi 密码、服务器令牌、NVS、个人语音录音或聊天原文。保留上游和厂商许可证；没有为第三方源码重新授权。源码中的其他板型和测试夹具是构建/参考内容，不代表本机配置。
 
 第三方依赖包含原样保留的MQTT TLS测试密钥/证书和音效示例PCM，它们是输入交付包中的上游测试夹具，不是用户设备凭据或用户录音；路径和精确哈希见manifests/vendor-test-fixtures.json。未联网验证其上游公开状态，不可用于实际服务认证。隐私扫描按已核对哈希允许这些夹具，其他凭据形状仍阻止。保留它们以避免手改锁定依赖。
+
+## 电脑生成台词
+
+新增[电脑台词生成器](tools/coco_tts_desktop/README.md)：Windows输入文字后，用已绑定小智服务当前音色生成OGG/WAV并试听。完整源码在tools/coco_tts_desktop；新增独立工具包不含Python运行时。2026-11-02原项目ZIP是历史快照，没有此次新增。
+
+## 摇头和遥控唤醒
+
+2026-11-04已更新三端应用：C路G6/G7曲轴摇头，遥控首页增加中文摇头/唤醒键，原方向键保留。操作和协议见[摇头与唤醒](software/head-and-wake.md)，实测边界见[本次验证](debug/head_wake_validation.md)。小智配网按用户要求稍后处理；不能把事件接收当联网对话成功。

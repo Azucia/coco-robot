@@ -11,7 +11,16 @@ constexpr uint16_t CONTROL_LEASE_MS=250;
 constexpr uint16_t ROBOT_HEARTBEAT_MS=200;
 constexpr uint16_t REMOTE_LINK_TIMEOUT_MS=1000;
 constexpr int16_t DRIVE_LIMIT=1000;
-enum class Kind:uint8_t { Discover=1,Offer=2,PairRequest=3,PairAck=4,Control=5,Heartbeat=6,Dialogue=7 };
+enum class Kind : uint8_t {
+    Discover = 1,
+    Offer = 2,
+    PairRequest = 3,
+    PairAck = 4,
+    Control = 5,
+    Heartbeat = 6,
+    Dialogue = 7,
+    Head = 8
+};
 #pragma pack(push,1)
 struct Packet {
  uint32_t magic;
@@ -39,9 +48,17 @@ inline void seal(Packet &p){p.magic=MAGIC;p.version=VERSION;p.bytes=sizeof(Packe
 inline bool decode(const void *data,size_t length,Packet &p){
  if(length!=sizeof(Packet))return false;memcpy(&p,data,sizeof(p));
  uint8_t kind=(uint8_t)p.kind;
- return p.magic==MAGIC&&p.version==VERSION&&p.bytes==sizeof(Packet)&&kind>=1&&kind<=7&&
- p.throttle>=-DRIVE_LIMIT&&p.throttle<=DRIVE_LIMIT&&p.steering>=-DRIVE_LIMIT&&p.steering<=DRIVE_LIMIT&&
- p.crc==crc32(&p,offsetof(Packet,crc));
+ return p.magic == MAGIC && p.version == VERSION && p.bytes == sizeof(Packet) && kind >= 1 &&
+        kind <= 8 && p.throttle >= -DRIVE_LIMIT && p.throttle <= DRIVE_LIMIT &&
+        p.steering >= -DRIVE_LIMIT && p.steering <= DRIVE_LIMIT &&
+        p.crc == crc32(&p, offsetof(Packet, crc));
+}
+inline uint8_t offerChannel(const Packet& p, uint8_t receivedChannel) {
+    if (p.kind != Kind::Offer)
+        return 0;
+    if (p.steering >= 1 && p.steering <= 11)
+        return uint8_t(p.steering);
+    return p.steering == 0 && receivedChannel >= 1 && receivedChannel <= 11 ? receivedChannel : 0;
 }
 inline bool newerSequence(uint32_t next,uint32_t previous){return (int32_t)(next-previous)>0;}
 enum class Direction:int8_t { Stop=-1,Forward=0,Backward=1,Left=2,Right=3 };
